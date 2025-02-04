@@ -1,7 +1,8 @@
 import express, { Application, Router } from 'express';
-import bodyParser from 'body-parser';
+import * as bodyParser from 'body-parser';
 import transactionRouter from './router/transaction.router';
-import pool from './datasource/db.datasource';
+import errorMiddleware from './middleware/error.middleware';
+import { connectDB, sequelize } from './datasource/db.datasource';
 
 class Server {
     private app;
@@ -18,14 +19,13 @@ class Server {
     private initializeMiddlewares() {
         this.app.use(bodyParser.urlencoded({ extended:true }));
         this.app.use(bodyParser.json({ limit: '1mb' })); // 100kb default
-        this.app.use(cookieParser());
     }
 
-    private connectToTheDatabase() {
-        pool.connect(function (err, client, done) {
-            if (err) throw new Error(err);
-            console.log('Connected');
-          }); 
+    private async connectToTheDatabase() {
+        await connectDB();
+        sequelize.sync({ force: false }).then(() => {
+            console.log("✅Synced database successfully...");
+        });
     }
 
     private initializeErrorHandling() {

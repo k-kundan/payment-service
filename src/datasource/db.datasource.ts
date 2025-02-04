@@ -1,10 +1,17 @@
-import { Pool } from 'pg';
+import { Sequelize, DataTypes } from 'sequelize';
 
-const pool = new Pool ({
-    max: 20,
-    //connectionString: 'postgres://root:newPassword@localhost:port/dbname',
-    connectionString: 'postgres://postgres:password123@postgres:5432/paymentDB',
-    idleTimeoutMillis: 30000
+const sequelize = new Sequelize('postgres', 'postgres', 'password', {
+  host: 'localhost',
+  dialect: 'postgres'
 });
 
-export default pool;
+async function connectDB() {
+    try {
+        await sequelize.authenticate();
+        console.log("✅ Connection has been established successfully.");
+    } catch (error) {
+        console.error("Unable to connect to the database:", error);
+    }
+}
+
+export { connectDB, sequelize, Sequelize, DataTypes };
