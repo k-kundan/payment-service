@@ -1,10 +1,13 @@
-import { Pool } from 'pg';
+import { Sequelize } from 'sequelize-typescript';
 
-const pool = new Pool ({
-    max: 20,
-    //connectionString: 'postgres://root:newPassword@localhost:port/dbname',
-    connectionString: 'postgres://postgres:password123@postgres:5432/paymentDB',
-    idleTimeoutMillis: 30000
+const sequelize = new Sequelize({
+  dialect: 'postgres',
+  host: process.env.DB_HOST,
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  logging: false,
+  models: [__dirname + '/../models/**.ts'],
 });
 
-export default pool;
+export default sequelize;

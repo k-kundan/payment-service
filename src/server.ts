@@ -1,31 +1,37 @@
-import express, { Application, Router } from 'express';
-import bodyParser from 'body-parser';
+import { config } from 'dotenv';
+const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
+config({ path: envFile });
+import express from 'express';
+import * as bodyParser from 'body-parser';
+import requestID from 'express-request-id';
 import transactionRouter from './router/transaction.router';
-import pool from './datasource/db.datasource';
-
+import errorMiddleware from './middleware/error.middleware';
+import sequelize from './datasource/db.datasource';
+import { Express } from 'express-serve-static-core';
+import {timestampHandler, transactionLogger} from './middleware/transaction-log.middleware';
 class Server {
-    private app;
+    private app: Express;
 
     constructor() {
         this.app = express();
         this.connectToTheDatabase();
         this.initializeMiddlewares();
-        this.initializeRouter();
         this.initializeErrorHandling();
-        
+        this.initializeRouter();
     }
 
     private initializeMiddlewares() {
+        this.app.use(requestID());
+        this.app.use(timestampHandler)
         this.app.use(bodyParser.urlencoded({ extended:true }));
         this.app.use(bodyParser.json({ limit: '1mb' })); // 100kb default
-        this.app.use(cookieParser());
+        this.app.use(transactionLogger)
     }
 
-    private connectToTheDatabase() {
-        pool.connect(function (err, client, done) {
-            if (err) throw new Error(err);
-            console.log('Connected');
-          }); 
+    private async connectToTheDatabase() {
+        sequelize.sync({ force: false }).then(() => {
+            console.log("✅Synced database successfully...");
+        });
     }
 
     private initializeErrorHandling() {
